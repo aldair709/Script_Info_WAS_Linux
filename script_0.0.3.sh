@@ -172,7 +172,114 @@ if [ -d $ruta1 ]; then
 #En caso de no ser la primera opcion	
 elif [ -d $ruta2 ]; then 
 	
-	echo "La ruta de WAS es: $ruta2"
+	echo "La ruta de WAS es: $ruta2">> $dtemp
+
+	echo "">> $dtemp
+
+	cmd_01=$($ruta2/bin/versionInfo.sh)
+	
+	echo $sep>> $dtemp
+	echo "Informacion de intalacion de WAS">> $dtemp
+	echo $sep>> $dtemp
+	echo "">> $dtemp
+	
+	echo "$cmd_01">> $dtemp
+
+	cmd_02=$($ruta2/bin/manageprofiles.sh -listProfiles)
+	
+	echo "">> $dtemp
+	echo $sep>> $dtemp
+	echo "Lista de los perfiles instalados en el servidor">> $dtemp
+	echo $sep>> $dtemp
+	echo "">> $dtemp
+	
+	echo "$cmd_02">> $dtemp
+	
+	#cmd_03=$(ls $ruta1/profiles)
+	#cmd_04=$(cat $cmd_03/logs/AboutThisProfile.txt)
+
+	array_01=($(ls $ruta2/profiles))
+	
+	echo "">> $dtemp
+	echo $sep>> $dtemp
+	echo "Acerca de los perfiles">> $dtemp
+	echo $sep>> $dtemp
+	echo "">> $dtemp
+	
+	for i in ${array_01[@]}; do 
+
+		echo $i>> $dtemp
+		cat $ruta2/profiles/$i/logs/AboutThisProfile.txt>> $dtemp
+		echo "">> $dtemp	
+
+	 	#n=n+1
+	done
+	#echo "$cmd_04"
+
+	echo "">> $dtemp
+	echo $sep>> $dtemp
+	echo "Acerca de las aplicaciones">> $dtemp
+	echo $sep>> $dtemp
+	echo "">> $dtemp
+
+	profile="${array_01[0]}"
+
+	#Informacion de las aplicaciones
+	#$ruta1/profiles/$profile/bin/wsadmin.sh -lang jython -user $userWAS -password $passWAS -f /home/$userL/media/script.py>> $dtemp
+	$ruta2/profiles/$profile/bin/wsadmin.sh -lang jython -user $uWAS -password $pWAS -f /home/$userL/media/infoApp.py>> $dtemp
+
+	#Contar numero de aplicaciones
+	echo "">> $dtemp
+	rt=$(whoami)
+	rt1="/home/$rt"
+	appTemp="$rt1/file.txt"
+	
+	$ruta2/profiles/$profile/bin/wsadmin.sh -lang jython -user $uWAS -password $pWAS -c 'print AdminApp.list()'> $appTemp
+	
+	mapfile -t array_03 < $appTemp
+
+	let numApp=${#array_03[@]}-1
+	echo $sep>> $dtemp
+	echo "Numero de aplicaciones instaladas: $numApp">> $dtemp
+	rm $appTemp
+
+	#informacion de los servidores
+	echo "">> $dtemp
+	echo $sep>> $dtemp
+	echo "Acerca de los Websphere Application Servers">> $dtemp
+	echo $sep>> $dtemp
+	echo "">> $dtemp
+	
+	#$ruta1/profiles/$profile/bin/wsadmin.sh -lang jython -user $userWAS -password $passWAS -f /home/$userL/media/jvm.py>> $dtemp
+	$ruta2/profiles/$profile/bin/wsadmin.sh -lang jython -user $uWAS -password $pWAS -f /home/$userL/media/infoServ.py>> $dtemp
+
+	nCpu=$(grep -c ^processor /proc/cpuinfo)
+	numcpu="$nCpu"
+	echo "">> $dtemp
+	echo $sep>> $dtemp
+	echo "Numero de CPU's del servidor: $numcpu">> $dtemp
+	
+	echo "">> $dtemp
+	echo $sep>> $dtemp
+	let mem=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+	let ram=mem/1000
+	
+	echo "Memoria RAM del servidor: $ram MB">> $dtemp 
+
+	echo "">> $dtemp
+
+	echo "La recoleccion se ha completado"
+	echo ""
+	
+	#read -p "Nombre del archivo: " nameFile
+	
+	rutaFile="/home/$userL/test/$hostName.txt"
+	echo "">> $rutaFile
+	cat $dtemp>> $rutaFile
+	
+	echo "El archivo se guardo en $rutaFile"
+	
+	rm $dtemp
 
 else 
 	
